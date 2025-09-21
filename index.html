@@ -250,7 +250,8 @@
 
         .submit-section {
             text-align: center;
-            margin: 48px 0;
+            margin: 48px 0 80px 0; /* Increased bottom margin for scroll hint */
+            position: relative;
         }
 
         .submit-section .btn {
@@ -260,10 +261,50 @@
             min-width: 200px;
         }
 
+        /* Visual hint for scrolling */
+        .scroll-hint {
+            position: absolute;
+            bottom: -60px; /* More space below button */
+            left: 50%;
+            transform: translateX(-50%);
+            color: #86868b;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .scroll-hint.show {
+            opacity: 1;
+        }
+
+        .scroll-hint::after {
+            content: "↓";
+            display: block;
+            font-size: 18px;
+            margin-top: 8px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-8px);
+            }
+            60% {
+                transform: translateY(-4px);
+            }
+        }
+
         .feedback-section {
-            margin-top: 60px;
+            margin-top: 20px; /* Reduced since we added space in submit-section */
             padding-top: 48px;
             border-top: 1px solid #e5e5e7;
+            scroll-margin-top: 20px; /* Ensures proper scroll positioning */
         }
 
         .feedback-card {
@@ -272,6 +313,13 @@
             border-radius: 18px;
             padding: 40px;
             transition: all 0.3s ease;
+            transform: translateY(10px);
+            opacity: 0;
+        }
+
+        .feedback-card.show {
+            transform: translateY(0);
+            opacity: 1;
         }
 
         .feedback-content {
@@ -431,10 +479,19 @@
                 font-size: 1.5rem;
             }
             
+            .submit-section {
+                margin: 32px 0 60px 0; /* Adjusted for mobile */
+            }
+            
             .submit-section .btn {
                 padding: 16px 32px;
                 width: 100%;
                 max-width: 280px;
+            }
+            
+            .scroll-hint {
+                bottom: -50px; /* Adjusted spacing for mobile */
+                font-size: 13px;
             }
             
             .answer-meta {
@@ -515,6 +572,9 @@
                 <button onclick="getFeedback()" class="btn" id="submitBtn" disabled>
                     Get AVA Feedback
                 </button>
+                <div class="scroll-hint" id="scrollHint">
+                    Feedback will appear below
+                </div>
             </div>
 
             <!-- Feedback Section -->
@@ -544,6 +604,7 @@
         const answerInput = document.getElementById('answerInput');
         const charCount = document.getElementById('charCount');
         const submitBtn = document.getElementById('submitBtn');
+        const scrollHint = document.getElementById('scrollHint');
         const feedbackSection = document.getElementById('feedbackSection');
         const loadingState = document.getElementById('loadingState');
         const feedbackContent = document.getElementById('feedbackContent');
@@ -670,8 +731,11 @@
             
             if (hasText) {
                 submitBtn.textContent = hasRealAI ? 'Get AVA Feedback' : 'Get Demo Feedback';
+                // Show scroll hint when user is ready to submit
+                scrollHint.classList.add('show');
             } else {
                 submitBtn.textContent = 'Enter answer to continue';
+                scrollHint.classList.remove('show');
             }
         }
 
@@ -692,6 +756,15 @@
             feedbackContent.innerHTML = '';
             submitBtn.disabled = true;
             submitBtn.textContent = 'Analyzing...';
+
+            // Smooth scroll to feedback section with slight delay for better UX
+            setTimeout(() => {
+                feedbackSection.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start',
+                    inline: 'nearest'
+                });
+            }, 100);
 
             try {
                 const question = document.getElementById('questionText').textContent;
@@ -881,6 +954,15 @@ Keep feedback professional, constructive, and specific to this answer.`;
                 .replace(/\n/g, '<br>');
 
             feedbackContent.innerHTML = formattedFeedback;
+            
+            // Add entrance animation to feedback card
+            const feedbackCard = document.querySelector('.feedback-card');
+            setTimeout(() => {
+                feedbackCard.classList.add('show');
+            }, 100);
+            
+            // Hide scroll hint once feedback is shown
+            scrollHint.classList.remove('show');
         }
 
         // Utility functions
